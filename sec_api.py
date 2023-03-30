@@ -83,15 +83,3 @@ class SECAPI:
         df_final['PERIOD'] = [x[6:] if len(x) > 6 else 'YE' for x in df_final['FRAME']]
         df_final['CALC'] = 0 #DUMMY COLUMN FOR CALCS
         return df_final
-
-
-df_nvidia = SECAPI('0001045810', 4).clean()
-print(df_nvidia[['FRAME', 'YEAR', 'PERIOD', 'end', 'Assets']][df_nvidia['PERIOD']=='Q4'])
-print(df_nvidia[['FRAME', 'Assets', 'Liabilities', 'Revenues']][df_nvidia['PERIOD']=='Q4'].set_index('FRAME').T)
-
-df_dak = SECAPI('0000915779', 4).clean()
-print(df_dak[['FRAME', 'YEAR', 'PERIOD', 'end', 'Assets']][df_dak['PERIOD']=='Q4'])
-print(df_dak[['FRAME', 'Assets', 'Liabilities', 'Revenues']][df_dak['PERIOD']=='Q4'].set_index('FRAME').T)
-
-# df_cf = SECAPI('0000811532', 10).get()
-# print(df_cf[['FRAME', 'YEAR', 'PERIOD', 'end', 'Assets']][df_cf['PERIOD']=='Q4'])
