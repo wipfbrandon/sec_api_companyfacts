@@ -83,3 +83,50 @@ class SECAPI:
         df_final['PERIOD'] = [x[6:] if len(x) > 6 else 'YE' for x in df_final['FRAME']]
         df_final['CALC'] = 0 #DUMMY COLUMN FOR CALCS
         return df_final
+        def custom_revenue(self, rev, sales_rev, rev_from_cont):
+        try:
+            rev_list = pd.Series([rev, sales_rev, rev_from_cont]).fillna(0).astype(int)
+            return rev_list.max()
+        except:
+            return 0
+
+    def enhance(self):
+        df_clean = self.clean()
+
+        period_dict = {'df_ye':'YE', 'df_q4':'Q4', 'df_q3':'Q3', 'df_q2':'Q2', 'df_q1':'Q1'}
+        df_dict = {}
+
+        for period in period_dict:
+            df = df_clean[df_clean['FRAME'].str.contains(f'{period_dict[period]}')]
+            df['YEAR'] = [x[2:6] for x in df['FRAME']]
+            df['PERIOD'] = [x[6:] for x in df['FRAME']]
+            df['CALC'] = 0 #DUMMY COLUMN FOR CALCS
+
+            if df['Revenues'].notnull().all():
+                df['GROSS_REV'] = df['Revenues']
+            elif set(['Revenues', 'SalesRevenueNet', 'RevenueFromContractWithCustomerExcludingAssessedTax']).issubset(df.columns):
+                df['GROSS_REV'] = df.apply(lambda row: self.custom_revenue(row['Revenues'],row['SalesRevenueNet'],row['RevenueFromContractWithCustomerExcludingAssessedTax']),axis=1)
+            elif set(['Revenues','RevenueFromContractWithCustomerExcludingAssessedTax']).issubset(df.columns):
+                df['GROSS_REV'] = df.apply(lambda row: self.custom_revenue(row['Revenues'],row['CALC'],row['RevenueFromContractWithCustomerExcludingAssessedTax']),axis=1)
+
+            if 'GROSS_REV' in df:
+                df['AR_DAYS'] = ((df['AccountsReceivableNetCurrent'] / df['GROSS_REV']) * 91.25).round(2)
+
+            if set(['NetIncomeLoss','GROSS_REV']).issubset(df.columns):
+                df['PROFIT_MARGIN'] = df['NetIncomeLoss'] / df['GROSS_REV']
+
+            if 'NetIncomeLoss' in df:
+                df['NET_INCOME_PCT_CHG'] = df['NetIncomeLoss'].pct_change(periods=-1)
+
+            if set(['AssetsCurrent','LiabilitiesCurrent']).issubset(df.columns):
+                df['CURRENT_RATIO'] = df['AssetsCurrent'] / df['LiabilitiesCurrent']
+
+            if set(['LiabilitiesAndStockholdersEquity','StockholdersEquity']).issubset(df.columns):
+                df['LIABILITIES'] = df['LiabilitiesAndStockholdersEquity'] - df['StockholdersEquity']
+
+            df = df.set_index(['FRAME'])
+            df = df.dropna(axis=1, how='all') #DROP ROWS WHERE ALL VALUES = NAN
+
+            df_dict[period] = df
+
+        return df_dict
