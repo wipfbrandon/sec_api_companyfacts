@@ -11,12 +11,14 @@ from datetime import date
 
 from _constants import BASE_URL_XBRL_COMPANY_FACTS
 
+user_email = "ENTER A VALID EMAIL ADDRESS"
+
 
 class SECAPI:
     def __init__(self, cik:str, lookback:int = 8):
         self.cik = cik
         self.lookback = lookback
-        self.header = {'User-Agent': "pythonlearnin@gmail.com"}
+        self.header = {'User-Agent': user_email}
         self.url = f"{BASE_URL_XBRL_COMPANY_FACTS}/CIK{cik}.json"
 
 
